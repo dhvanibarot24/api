@@ -8,6 +8,13 @@ class Teacher(BaseModel):
     name: str
     subject: str
 
+class timetable(BaseModel):
+    t_id: int
+    std: int
+    class_no: str
+    start: str
+    end: str
+
 def connect():
     return sqlite3.connect('database.db')   
 
@@ -21,12 +28,12 @@ def cr_tables():
     
     cursor.execute(''' CREATE TABLE IF NOT EXISTS schedule(
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        teacher_id INTEGER NOT NULL,
-                        standard INTEGER NOT NULL,
-                         room_no TEXT NOT NULL,
-                         start_time TEXT NOT NULL,
-                         end_time TEXT NOT NULL
-    
+                        t_id INTEGER NOT NULL,
+                        std INTEGER NOT NULL,
+                         class_no TEXT NOT NULL,
+                         start TEXT NOT NULL,
+                         end TEXT NOT NULL
+
     )''')
 
 @app.post("/teachers")
@@ -70,7 +77,41 @@ def update(name : str, teacher : Teacher):
     conn.close()
 
     return {"message": "Teacher updated successfully"}
+@app.delete("/teachers/{name}")
+def delete(name : str):
+    conn = connect()
+    cursor = conn.cursor()
 
+    cursor.execute(""" DELETE FROM teacher WHERE name = ? """, (name,))
+    conn.commit()
+    conn.close()
+
+    return {"message": "Teacher deleted successfully"}
+
+@app.post("/timetable")
+def add(data :timetable):
+    conn = connect()
+    cursor = conn.cursor()
+
+    cursor.execute(("""
+        INSERT INTO schedule(t_id, std, class_no, start, end)
+        VALUES(?, ?, ?, ?, ?)
+    """), (data.t_id, data.std, data.class_no, data.start, data.end))
+    conn.commit()
+    conn.close()
+
+    return {"message": "Schedule added successfully"}
+
+@app.get("/timetable")
+def get_data():
+    conn = connect()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM timetable")
+    timetable = cursor.fetchall()
+    conn.close()
+
+    return {"timetable": timetable}
 
 @app.get("/")
 def home():
